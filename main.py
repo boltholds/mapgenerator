@@ -3,7 +3,7 @@
 import sys
 import openpyxl
 import re
-
+import json
 
 hat = '''#utf-8
 module0	= [] #default
@@ -99,11 +99,14 @@ def wide_map(premap_dict):
 		if(group != ''):
 			subcounter_name = counter_name+'x'+group
 			if	(global_group[key][counter_name].get(subcounter_name) is None):
-				global_group[key][counter_name][subcounter_name] =list()
+				global_group[key][counter_name][subcounter_name] =dict()
 			if subgroup != '':
 				element = subcounter_name+'x'+subgroup
-				global_group[key][counter_name][subcounter_name].append(element)
-			
+				global_group[key][counter_name][subcounter_name][element] = premap_dict[name]
+			else:
+				global_group[key][counter_name][subcounter_name] = premap_dict[name]
+		else:
+			global_group[key][counter_name] = premap_dict[name]
 				
 		
 		'''
@@ -116,7 +119,7 @@ def wide_map(premap_dict):
 	'''
 
 	
-	print_map(global_group)
+	#print_map(global_group)
 	return global_group
 	
 def hat_countr(name,fil):
@@ -132,6 +135,23 @@ def hat_countr(name,fil):
 	#fil.write("#"*wide)
 	fil.write("\n")
 	
+def json_parse(ispig,dirty,deep):
+	#print("\t"*deep,dirty)
+	print(deep)
+	if type(dirty) == None:
+		return 0
+	elif  type(dirty) == int:
+		print("\t"*len(deep),ispig," = ",dirty)
+		deep.clear()
+		return 0
+	elif (type(dirty) == dict)&(len(dirty)>1):
+		for pig in dirty:
+			deep.append(pig)
+			json_parse(pig,dirty.get(pig),deep)
+		
+			
+			
+			
 
 
 	
@@ -140,16 +160,13 @@ def outjob(map_dir,adress_dir):
 	with open("map.py","w+") as out:
 		out.write(hat)
 		out.write("\n"*2)
-		#print(map_dir)
+		print(map_dir)
 		subgroup_name = ''
-		for global_group in map_dir: #mall,Elall ...
-			
-		    for group in map_dir.get(global_group):
-		    	if map_dir.get(group) is not None:
-		    		for subgroup in map_dir.get(group):
-		    			print(subgroup)
-				
-				
+		#print(map_dir)
+		#print(map_dir['mall']['m3']['m3x1'])
+		deep = list()
+		pig =''
+		json_parse(pig,map_dir,deep)
 
 			
 	
