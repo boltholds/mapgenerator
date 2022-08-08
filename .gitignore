@@ -1,1 +1,6 @@
 /.ipynb_checkpoints/
+/exp/
+/envs/
+/__pycache__/
+*.sh
+map.py
