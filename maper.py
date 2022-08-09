@@ -6,8 +6,12 @@ import openpyxl
 import xls2xlsx
 import re
 import json
+from collections import deque
 from xls2xlsx import XLS2XLSX
+import logging
 
+#logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(name)s %(levelname)s:%(message)s')
+logging.getLogger(__name__)
 
 hat = '''#utf-8
 module0	= [] #default
@@ -34,6 +38,7 @@ def init_row(worksheet):
 		if rowvalue:
 			if rowvalue[:3] == "ARK":
 				return row
+	logging.error("No named ARK in address file!")
 				
 def get_activesh(wookbook):
 	for issheet in range(0,5):
@@ -43,6 +48,7 @@ def get_activesh(wookbook):
 			
 #read columns by adres
 def parse_xls(file_xls,legacy):
+	#offset_transmiter = 512
 	try:
 		if not legacy:
 			wookbook = openpyxl.load_workbook(file_xls, data_only=True)
@@ -56,24 +62,33 @@ def parse_xls(file_xls,legacy):
 
 		
 	except FileNotFoundError:
-		print(f"/!\ {file_xls} not found!")
+		logging.error(f" {file_xls} not found!")
 		
 	except TypeError:
-		print(f"/!\ Not support type for parsing {type(file_xls)}" )
+		logging.error(f" Not support type for parsing {type(file_xls)}" )
 	
 	else:
 		start_row = init_row(worksheet)
 		conturs = dict()
 		for row in range(start_row, worksheet.max_row):
 			iscontur = worksheet[f'C{row}'].value
-			if iscontur is not None:
-				conturs[iscontur] = worksheet[f'E{row}'].value
+			try:
+				val = worksheet[f'E{row}'].value
+				if iscontur is not None:
+					if conturs.get(iscontur) is None:
+						conturs[iscontur] = val
+					else:
+						raise (AssertionError)
+			except AssertionError:
+				logging.warning(f" Counture {iscontur} = [ {val} ] has a duplicate! Was remove")
+				
 		return conturs
+
 
 
 def print_map(map_dict):
 	for name in map_dict:
-		print(f"Countur {name} on adress {map_dict[name]} \n")
+		logging.info(f" Countur {name} on adress {map_dict[name]} \n")
 
 #parse the hierarchy counturs on map to the JSON(dict in dict)
 def wide_map(premap_dict):
@@ -117,17 +132,17 @@ def wide_map(premap_dict):
 					global_group[key][counter_name] = premap_dict[name]
 					
 			
-			'''
-			#several print best thousand comment ;)
-			print(f"Is {key[0:2]}{main}")
+		
+			#several logging best thousand comment ;)
+			logging.debug(f" Is {key[0:2]}{main}")
 			
-			print(f" group {suf[0]} " if len(suf) else '')
-			print(f" subgroup {suf[1]} " if len(suf)>1 else '')
-			print("\n")
+			logging.debug(f" group {suf[0]} " if len(suf) else '')
+			logging.debug(f" subgroup {suf[1]} " if len(suf)>1 else '')
+			logging.debug("\n")
 
-		'''
+
 	except TypeError:
-		print(f"/!\ Instead of {type(global_group)} passed {type(premap_dict)}!")
+		logging.error(f" Instead of {type(global_group)} passed {type(premap_dict)}!")
 		
 	return global_group
 
@@ -156,7 +171,6 @@ def out_json(main_dir):
 def rec(outfile,mapy,keys,group,lvl,old_lvl):
     old_lvl = lvl
     lvl+=1
-    #print(old_lvl,lvl,keys)
     if (names.get(keys) != None)&(lvl<=0):
     	#if on head then print the hat :)
     	hat_countr(names.get(keys),outfile)
@@ -184,16 +198,16 @@ def outjob(map_dir,filename):
 			out.write(hat)
 			out.write("\n"*2)
 			subgroup_name = ''
-			g =list()
+			g = deque()
 			g.append('')
 			rec(out,map_dir,'mall',g,-1,0)
 	else:
-		print("/!\  Void Dict!")
+		logging.error(" Void passed dict")
 
 
 if __name__ == '__main__':
 
-	der = parse_xls("exp/Addresses.xls",1)
+	der = parse_xls("exp/adress_dubleerrtets.xlsx",0)
 	outjob(wide_map(der),"map.py")
 	out_json(wide_map(der))
 	

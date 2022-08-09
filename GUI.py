@@ -4,7 +4,8 @@
 from tkinter import *
 from tkinter import filedialog
 from maper import parse_xls,outjob,wide_map
-
+from tkinterdnd2 import DND_FILES, TkinterDnD
+import logging
 class GUI:
 
 	def __init__(self):
@@ -66,6 +67,6 @@ if __name__ == '__main__':
 	loadBtn.place(x = 10, y = 10, width = 40, height = 40)
 	saveBtn.place(x = 60, y = 10, width = 40, height = 40)
 	quitBtn.place(x = 110, y = 10, width = 40, height = 40)
-	
+
 	root.title("Менеджер по созданию map.py")
 	root.mainloop()
