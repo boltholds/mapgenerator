@@ -3,4 +3,5 @@
 /envs/
 /__pycache__/
 *.sh
-map.py
+*.json
+*.yaml

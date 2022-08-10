@@ -1,31 +1,57 @@
 #utf-8
-#!/home/bh/Projects/mapgenerator/envs/bin/python
 
-from tkinter import *
-from tkinter import filedialog
+import tkinter as tk
+from tkinter import filedialog 
+from tkinter.scrolledtext import ScrolledText
 from maper import parse_xls,outjob,wide_map
-from tkinterdnd2 import DND_FILES, TkinterDnD
 import logging
+
+#logger = logging.getLogger(__name__)
+
+
+
+class WidgetLogger(logging.Handler):
+    def __init__(self, widget):
+        logging.Handler.__init__(self)
+        self.setLevel(logging.DEBUG)
+        self.widget = widget
+        self.widget.config(state='disabled')
+        self.widget.tag_config("INFO", foreground="black")
+        self.widget.tag_config("DEBUG", foreground="grey")
+        self.widget.tag_config("WARNING", foreground="orange")
+        self.widget.tag_config("ERROR", foreground="red")
+        self.widget.tag_config("CRITICAL", foreground="red", underline=1)
+
+        self.red = self.widget.tag_configure("red", foreground="red")
+        
+    def emit(self, record):
+        self.widget.config(state='normal')
+        # Append message (record) to the widget
+        self.widget.insert(tk.END, self.format(record) + '\n', record.levelname)
+        self.widget.see(tk.END)  # Scroll to the bottom
+        self.widget.config(state='disabled') 
+        self.widget.update() # Refresh the widget
+
+
 class GUI:
 
 	def __init__(self):
 		self.map_dict = dict()
 		self.load_file =''
 		self.out_file =''
-		self.file_legacy = None
+
 	def Quit(self,ev):
 		global root
 		#del(map_dict)
 		root.destroy()
 
 	def LoadFile(self,ev): 
-		self.out_file = filedialog.Open(root, filetypes = [('*.xlsx files', '.xlsx'),('*.xls files', '.xls')]).show()
+		self.out_file = filedialog.Open(root, filetypes = [('*.xls files', '.xls'),('*.xlsx files', '.xlsx')]).show()
 		if self.out_file == '':
 		    return
-		if self.out_file.endswith(".xls"):
-			self.file_legacy = 1
-		#print(type(self.out_file))
-		self.map_dict =  parse_xls(self.out_file,self.file_legacy)
+		logger.info(f"Open file {self.out_file}")
+		self.map_dict =  parse_xls(self.out_file)
+		logger.info('Complete! Save result file')
 
 	def SaveFile(self,ev):
 		self.load_file = filedialog.SaveAs(root, filetypes = [('*.py files', '.py')]).show()
@@ -34,31 +60,45 @@ class GUI:
 		if not self.load_file.endswith(".py"):
 		    fn+=".py"
 		temp = wide_map(self.map_dict)
-		outjob(temp,self.load_file)
+		logger.info(f"Write file {self.load_file}")
+		outjob(self.load_file,temp)
+		logger.info('Complete!')
+	
+
 
 			
 if __name__ == '__main__':
 
-	root = Tk()
+	root = tk.Tk()
 	mygui = GUI()
-	panelFrame = Frame(root, height = 60, bg = 'gray')
-	textFrame = Frame(root, height = 340, width = 600)
+	panelFrame = tk.Frame(root, height = 60, bg = 'gray')
+	textFrame = tk.Frame(root, height = 340, width = 600)
 
 	panelFrame.pack(side = 'top', fill = 'x')
 	textFrame.pack(side = 'bottom', fill = 'both', expand = 1)
 
-	textbox = Text(textFrame, font='Arial 14', wrap='word')
-	scrollbar = Scrollbar(textFrame)
+	
+	
+	
+	st = ScrolledText(textFrame, state='disabled')
+	st.configure(font='TkFixedFont')
+	st.pack()
+	# Create textLogger
+	text_handler = WidgetLogger(st)
 
-	scrollbar['command'] = textbox.yview
-	textbox['yscrollcommand'] = scrollbar.set
+	# Add the handler to logger
+	logger = logging.getLogger()
+	logger.addHandler(text_handler)
+	logger.setLevel(logging.INFO)
+	# Log some messages
 
-	textbox.pack(side = 'left', fill = 'both', expand = 1)
-	scrollbar.pack(side = 'right', fill = 'y')
+	logger.info('Load table adress file')
 
-	loadBtn = Button(panelFrame, text = 'Load')
-	saveBtn = Button(panelFrame, text = 'Save')
-	quitBtn = Button(panelFrame, text = 'Quit')
+
+	
+	loadBtn = tk.Button(panelFrame, text = 'Load')
+	saveBtn = tk.Button(panelFrame, text = 'Save')
+	quitBtn = tk.Button(panelFrame, text = 'Quit')
 
 	loadBtn.bind("<Button-1>", mygui.LoadFile)
 	saveBtn.bind("<Button-1>", mygui.SaveFile)
@@ -69,4 +109,5 @@ if __name__ == '__main__':
 	quitBtn.place(x = 110, y = 10, width = 40, height = 40)
 
 	root.title("Менеджер по созданию map.py")
+	root.iconphoto(False, tk.PhotoImage(file=f'/home/bh/Projects/mapgenerator/source/{__name__}.png'))
 	root.mainloop()
