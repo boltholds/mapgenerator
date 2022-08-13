@@ -3,13 +3,18 @@
 import sys
 #excel parse
 import openpyxl
-import re
+
 import json
 from collections import deque
 
 import logging
 
-
+try:
+	import re2 as re
+except:
+	import re
+	
+	
 logger = logging.getLogger(__name__)
 
 hat = '''#utf-8
@@ -87,13 +92,13 @@ def parse_xls(file_xls):
 			
 			#found start row of adress name
 		else:
+		
 			try:
-				from xls2xlsx import XLS2XLSX
+				from toxlsx import XLS2XLSX
 				w2x = XLS2XLSX(file_xls)
 				wookbook = w2x.to_xlsx()
 			except ImportError:
 				logger.error(f"Install XLS2XLSX lib for support format *.xlsx" )	
-
 		wookbook.active = get_activesh(wookbook)
 		worksheet = wookbook.active
 		
@@ -124,10 +129,11 @@ def print_map(map_dict):
 
 #parse the hierarchy counturs on map to the JSON(dict in dict)
 def wide_map(premap_dicts):
-	'''Groups counturs by name and suffix GlobalGroupxGroupxSubgroupxElement 
+	'''Groups counturs by name and suffix (GlobalGroup)x(Group)x(Subgroup)x(Element )
 exp EL1x1x1
-its ELall - GlobalGroup
-EL1- Group
+its 
+EL+(all) - GlobalGroup
+EL1- Main Group
 EL1x1 - Subgroup
 ELx1x1x1 - element
 
@@ -135,7 +141,7 @@ Element it's key of value addresof counter in dict
 '''
 
 	#NAME is ELx,mx,JLx
-	names = r'([mMKLJ]|[EKJ][Ll])[1-9]'
+	names = r'([mMKLJ]|[SEKJ][Ll])[1-9]\d*'
 	#it's xNxN exp x1 or x2x1
 	sufix_pattern = r'[.xX][1-9]\d*'
 	#NAMExNxN,NAMExN
@@ -148,12 +154,17 @@ Element it's key of value addresof counter in dict
 			suf = re.findall(sufix_pattern,name)
 			nm = re.findall(names,name)
 			if nm:
+				
 				glob = f"{nm[0]}" # EL1 -> EL, KL1 -> KL
 				group = suf[0][1:] if len(suf) else '' #x1 -> 1
+				spliter = suf[0][0] if len(suf) else 'x'
 				subgroup = suf[1][1:] if len(suf)>1 else ''
 				group = group.replace('.','')#if name was exp m1.2.3 
 				subgroup = subgroup.replace('.','')
-				main =  name[len(nm[0])].replace('.','')
+				if name.find(spliter):
+					main =  name.split(spliter)[0][len(nm[0]):]
+				else:
+					main =  name[len(nm[0])]
 				key=glob+'all'
 				if global_group.get(key) is None:
 					global_group[key] = dict()
@@ -172,7 +183,7 @@ Element it's key of value addresof counter in dict
 						global_group[key][counter_name][subcounter_name] = premap_dicts[name]
 				else:
 					global_group[key][counter_name] = premap_dicts[name]
-		
+				#logger.debug(f" Is {name[len(glob):(len(suf[0])+len(suf[1]))]}")
 				#several logging best thousand comment ;)
 				logger.debug(f" Is {key[0:2]}{main}")
 				
@@ -181,8 +192,11 @@ Element it's key of value addresof counter in dict
 				logger.debug("\n")
 
 
-	except TypeError:
-		logger.error(f" Instead of {type(global_group)} passed {type(premap_dicts)}!")
+
+
+	except Exception as e:
+		logger.error(f"Error:{e} in name a func...")
+		#logger.error(f" Instead of {type(global_group)} passed {type(premap_dicts)}!")
 		
 	return global_group
 

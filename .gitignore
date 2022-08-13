@@ -1,7 +1,8 @@
 /.ipynb_checkpoints/
-/exp/
+/test-exp/
 /envs/
 /__pycache__/
+/deploy/
 *.sh
 *.json
 *.yaml
