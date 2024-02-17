@@ -2,7 +2,7 @@
 /test-exp/
 /envs/
 /venv/
-/.edea/
+/.idea/
 /__pycache__/
 /deploy/
 *.sh
