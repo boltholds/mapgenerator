@@ -48,12 +48,13 @@ class GUI:
 	def LoadFile(self,ev): 
 		self.out_file = filedialog.Open(root, filetypes = [('*.xls files', '.xls'),('*.xlsx files', '.xlsx')]).show()
 		if self.out_file == '':
-		    return
+			logger.error('Not open file! Try again!')
+			return
 		logger.info(f"Open file {self.out_file}")
-		self.map_dict =  parse_xls(self.out_file)
+		self.map_dict = parse_xls(self.out_file)
 		logger.info('Complete! Save result file')
 
-	def SaveFile(self,ev):
+	def SaveFile(self, ev):
 		self.load_file = filedialog.SaveAs(root, filetypes = [('*.py files', '.py')]).show()
 		if self.load_file == '':
 		    return
@@ -109,6 +110,7 @@ if __name__ == '__main__':
 	quitBtn.place(x = 110, y = 10, width = 40, height = 40)
 
 	root.title("Менеджер по созданию map.py")
-	file_ico = Path("source", f"{__name__}.png")
-	root.iconphoto(False, tk.PhotoImage(file=file_ico))
+	file_ico = set(Path.cwd().rglob(f"{__name__}.png"))
+	if file_ico:
+		root.iconphoto(False, tk.PhotoImage(file=file_ico.pop()))
 	root.mainloop()
