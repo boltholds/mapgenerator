@@ -5,7 +5,7 @@ from tkinter import filedialog
 from tkinter.scrolledtext import ScrolledText
 from maper import parse_xls,outjob,wide_map
 import logging
-
+from pathlib import Path
 #logger = logging.getLogger(__name__)
 
 
@@ -109,5 +109,6 @@ if __name__ == '__main__':
 	quitBtn.place(x = 110, y = 10, width = 40, height = 40)
 
 	root.title("Менеджер по созданию map.py")
-	root.iconphoto(False, tk.PhotoImage(file=f'/home/bh/Projects/mapgenerator/source/{__name__}.png'))
+	file_ico = Path("source", f"{__name__}.png")
+	root.iconphoto(False, tk.PhotoImage(file=file_ico))
 	root.mainloop()
